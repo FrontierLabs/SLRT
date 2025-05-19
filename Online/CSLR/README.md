@@ -5,6 +5,7 @@ Code for our proposed online continuous sign language recognition framework
 ## Data Preparation
 For datasets and keypoint inputs, please check [../README.md](../README.md).
 
+<br>
 If you want to generate keypoint inputs yourself, please refer to the following steps:
 
 Taking cls-daily as an example:
@@ -17,6 +18,7 @@ config_file='configs/cls-daily_keypoint.yaml'
 python -m torch.distributed.launch --nproc_per_node 8 --master_port 29999 --use_env gen_pose.py --config=${config_file} --split=test
 ```
 
+<br>
 If you encounter an OOM (Out Of Memory) issue with storage, you can refer to the following code: slice the video frames, extract keypoints in batches according to the batch size, and then combine the results.
 1. Slice the video frames
 
@@ -73,7 +75,7 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 29999 --use_
 We provide model checkpoints for [Phoenix-2014T](https://hkustconnect-my.sharepoint.com/:f:/g/personal/rzuo_connect_ust_hk/EidJXFxpyaNPho5SKtVHEJ8BHex8Gq62koL-RrNnqtF1PA?e=IGGpxU) and [CSL-Daily](https://hkustconnect-my.sharepoint.com/:f:/g/personal/rzuo_connect_ust_hk/EhS5B3p9i3FNu5OpqFy3WyABkMMGg1VbAzMJrxjuFVOg6Q?e=c7OK0Z).
 
 
-如果需要自定义训练数据空白片段较多，可以参考下面的代码进行数据过滤：
+If you need to customize your training data and there are many blank segments, you can refer to the following code for data filtering:
 ```
 python data_filter.py --split train --filter_func blank
 ```
