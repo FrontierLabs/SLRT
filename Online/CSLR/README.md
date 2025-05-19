@@ -20,6 +20,7 @@ python -m torch.distributed.launch --nproc_per_node 8 --master_port 29999 --use_
 
 <br>
 If you encounter an OOM (Out Of Memory) issue with storage, you can refer to the following code: slice the video frames, extract keypoints in batches according to the batch size, and then combine the results.
+
 1. Slice the video frames
 
 Split the video frames into smaller batches to reduce memory usage:
