@@ -1,24 +1,23 @@
 task: S2G
 data:
   input_data: videos #features, gloss
-#  zip_file: ../../data/csl-daily/csl-daily-videos.zip
-  zip_file: /group/30106/neilzrzhang/2025H1/csl-daily/frames_512x512.zip
+  zip_file: ../../data/ce_csl/video/
   input_streams:
     - keypoint
     - rgb
-  keypoint_file: ../../data/csl-daily/keypoints_hrnet_dark_coco_wholebody_iso.pkl
+  keypoint_file: ../data/ce_csl/keypoints_hrnet_dark_coco_wholebody_iso.pkl
   use_keypoints:
     - pose 
     - mouth_half
     - hand
     - face_others_1_3
-  dataset_name: csl-daily
+  dataset_name: ce_csl
   level: char #word or char
   txt_lowercase: true
   max_sent_length: 400
-  train: ../../data/csl-daily/csl-daily.train
-  dev: ../../data/csl-daily/csl-daily.dev
-  test: ../../data/csl-daily/csl-daily.test
+  train: ../data/ce_csl/train.pkl
+  dev: ../data/ce_csl/dev.pkl
+  test: ../data/ce_csl/test.pkl
   transform_cfg:
     img_size: 224
     aug_hflip: false
@@ -42,7 +41,7 @@ testing:
       beam_size: 5
 training:
   overwrite: True
-  model_dir: results/csl-daily_s2g
+  model_dir: results/ce_csl_s2g
   random_seed: 0
   shuffle: True
   num_workers: 4
@@ -70,23 +69,23 @@ model:
     pretrained_path_rgb: results/csl-daily_video/ckpts/best.ckpt
     pretrained_path_keypoint: results/csl-daily_keypoint/ckpts/best.ckpt
     GlossTokenizer:
-      gloss2id_file: ../../data/csl-daily/gloss2ids.pkl
+      gloss2id_file: ../data/csl-daily/gloss2ids.pkl
     s3d:
-      pretrained_ckpt: ../../pretrained_models/s3ds_actioncls_ckpt
+      pretrained_ckpt: ../pretrained_models/s3ds_actioncls_ckpt
       use_block: 4
       freeze_block: 1
     keypoint_s3d:
       in_channel: 0 # placeholder
-      pretrained_ckpt: ../../pretrained_models/s3ds_actioncls_ckpt #from K400
+      pretrained_ckpt: ../pretrained_models/s3ds_actioncls_ckpt #from K400
       use_block: 4
       freeze_block: 0
     heatmap_cfg:
       raw_size:
-        - 512
-        - 512 #associated with name2keypoint file   
-      map_size:
-        - 170
-        - 170 
+        - 256
+        - 256 #associated with name2keypoint file
+#      map_size:
+#        - 170
+#        - 170
       input_size: 112
       sigma: 8
       threshold: 0.5

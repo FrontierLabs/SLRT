@@ -4,34 +4,36 @@ data:
   input_streams:
     - keypoint
     - rgb
-  keypoint_file: ../../data/phoenix_2014t/keypoints_hrnet_dark_coco_wholebody_iso.pkl
+  keypoint_file: ../../data/ce_csl/keypoints_hrnet_dark_coco_wholebody_iso.pkl
   use_keypoints:
     - pose
     - mouth_half
     - hand
-#  zip_file: ../../data/phoenix_2014t/PHOENIX2014T_videos.zip
-#  train: ../../data/phoenix_2014t/phoenix_iso_center_label_bag2items.train
-#  dev: ../../data/phoenix_2014t/phoenix_iso_center_label.dev
-#  test: ../../data/phoenix_2014t/phoenix_iso_center_label.test
-#  vocab_file: ../../data/phoenix_2014t/phoenix_iso_with_blank.vocab
-  zip_file: /group/40064/adacyang/code/手语识别/SLRT-main/data/phoenix_2014t/PHOENIX2014T_videos.zip
-  train: /group/40064/adacyang/code/手语识别/SLRT-main/data/phoenix_2014t/phoenix_iso_center_label_bag2items.train
-  dev: /group/40064/adacyang/code/手语识别/SLRT-main/data/phoenix_2014t/phoenix_iso_center_label.dev
-  test: /group/40064/adacyang/code/手语识别/SLRT-main/data/phoenix_2014t/phoenix_iso_center_label.test
-  vocab_file: /group/40064/adacyang/code/手语识别/SLRT-main/data/phoenix_2014t/phoenix_iso_with_blank.vocab
-  dataset_name: phoenix_iso
+  zip_file: ../../data/ce_csl/video/
+  train: ../../data/ce_csl/train.pkl
+  dev: ../../data/ce_csl/dev.pkl
+  test: ../../data/ce_csl/test.pkl
+  vocab_file: ../../data/ce_csl/ce_csl_iso_with_blank.vocab
+  dataset_name: ce_csl
   level: word #word or char
   txt_lowercase: true
-  num_output_frames: 16  #to-debug
+  num_output_frames: -1  #to-debug
+  win_size: 16
+  stride: 1
+  split_size: 24
+  prob_thr: 
+    - -1
   max_sent_length: 400
   transform_cfg:
-    bag_size: 6
-    num_instance: 6  #for backward
     img_size: 224
     color_jitter: true
     bottom_area: 0.7 #to-do
+    csl_cut: False
+    csl_resize:
+      - 320
+      - 320
     center_crop_size: 224 #to-change for csl
-    center_crop: False
+    center_crop: false
     randomcrop_threshold: 1
     aspect_ratio_min: 0.75
     aspect_ratio_max: 1.3
@@ -41,16 +43,16 @@ data:
 testing:
   cfg:
     recognition:
-      beam_size: 1
+      beam_size: 10
 training:
-  overwrite: True
-  model_dir: results/phoenix-2014t_ISLR
+  overwrite: true
+  model_dir: results/ce_csl_ISLR
   random_seed: 321
   shuffle: True
   num_workers: 8
-  batch_size: 4 #to-debug!
+  batch_size: 1 #to-debug!
   total_epoch: 100
-  keep_last_ckpts: 1
+  keep_last_ckpts: 5
   validation: 
     unit: epoch
     freq: 1
@@ -60,7 +62,7 @@ training:
   optimization:
     optimizer: Adam
     learning_rate:
-      default: 6.0e-4
+      default: 1.0e-4
     weight_decay: 0.001
     betas:
     - 0.9
@@ -82,8 +84,8 @@ model:
       freeze_block: 0
     heatmap_cfg:
       raw_size:
-        - 260
-        - 210 #associated with name2keypoint file 
+        - 256
+        - 256 #associated with name2keypoint file
       input_size: 112
       sigma: 8
     fuse_method: triplehead_cat_bilateral
@@ -124,8 +126,5 @@ model:
       temp: 0.1
       contras_setting: null
       topk: 1115
-      split_setting: split_nonblk
+      # split_setting: split_att_gaussian_ext_linear_keepscale
     label_smooth: 0.2
-    bag_loss: 
-      - avg_prob
-      - avg_prob

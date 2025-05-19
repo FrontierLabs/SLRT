@@ -50,24 +50,32 @@ except (ImportError, ModuleNotFoundError):
 default_mmdet_root = osp.dirname(mmdet.__path__[0])
 default_mmpose_root = osp.dirname(mmpose.__path__[0])
 default_det_config = (
-    f'{default_mmdet_root}/mmdet/configs/faster_rcnn/'
+    f'{default_mmdet_root}/configs/faster_rcnn/'
     'faster_rcnn_r50_caffe_fpn_mstrain_1x_coco-person.py')
+# default_det_ckpt = (
+#     'https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco-person/'
+#     'faster_rcnn_r50_fpn_1x_coco-person_20201216_175929-d022e227.pth')
 default_det_ckpt = (
-    'https://download.openmmlab.com/mmdetection/v2.0/faster_rcnn/faster_rcnn_r50_fpn_1x_coco-person/'
+    '/group/40064/adacyang/code/手语识别/SLRT-main/pretrained_models/det-ckpt/'
     'faster_rcnn_r50_fpn_1x_coco-person_20201216_175929-d022e227.pth')
 default_pose_config = (
     f'{default_mmpose_root}/configs/wholebody/2d_kpt_sview_rgb_img/topdown_heatmap/'
     'coco-wholebody/hrnet_w48_coco_wholebody_384x288_dark_plus.py')
+# default_pose_ckpt = (
+#     'https://download.openmmlab.com/mmpose/top_down/hrnet/'
+#     'hrnet_w48_coco_wholebody_384x288_dark-f5726563_20200918.pth')
 default_pose_ckpt = (
-    'https://download.openmmlab.com/mmpose/top_down/hrnet/'
+    '/group/40064/adacyang/code/手语识别/SLRT-main/pretrained_models/pose-ckpt/'
     'hrnet_w48_coco_wholebody_384x288_dark-f5726563_20200918.pth')
 
 
-def detection_inference(model, frames):
+def detection_inference(model, frames, batch_size=64):
+    imgs = [frame[0] for frame in frames]
     results = []
-    for frame in frames:
-        result = inference_detector(model, frame[0])
-        results.append(result)
+    for i in range(0, len(imgs), batch_size):
+        batch_imgs = imgs[i:i + batch_size]
+        batch_results = inference_detector(model, batch_imgs)
+        results.extend(batch_results)
     return results
 
 
@@ -87,15 +95,23 @@ def pose_inference(model, frames, det_results):
                 # not detect person
                 garbage_frame += 1
                 continue
-            pose = sorted(pose, key=lambda x:x['bbox'][-1])
+            pose = sorted(pose, key=lambda x: x['bbox'][-1])
             keypoints, bbox = pose[-1]['keypoints'], pose[-1]['bbox']
             kp[i] = keypoints
             # bb[i] = bbox
 
     else:
-        print(frames.shape)
-        d = [{'bbox': np.array([0, 0, frames.shape[2]-1, frames.shape[1]-1])}]
-        pose = inference_top_down_pose_model(model, frames[0], None, format='xyxy')[0]
+        total_frames = len(frames)
+        kp = np.zeros((total_frames, 133, 3), dtype=np.float32)
+        for i, f in enumerate(frames):
+            pose = inference_top_down_pose_model(model, f, None, format='xyxy')[0]
+            if pose == []:
+                # not detect person
+                garbage_frame += 1
+                continue
+            pose = sorted(pose, key=lambda x: x['bbox'][-1])
+            keypoints, bbox = pose[-1]['keypoints'], pose[-1]['bbox']
+            kp[i] = keypoints
 
     return kp, garbage_frame
 
@@ -127,7 +143,7 @@ def parse_args():
 
     parser.add_argument('--split', type=str, default='train', choices=['train', 'dev', 'test'])
     parser.add_argument('--start_end', nargs='+', type=int, default=None, help='for multi-node')
-    parser.add_argument('--from_ckpt', type=int, default=0 ,choices=[0,1])
+    parser.add_argument('--from_ckpt', type=int, default=0, choices=[0, 1])
     parser.add_argument('--img_per_iter', type=int, default=100)
     parser.add_argument('--gpu', type=int, default=1)
     parser.add_argument("--config", default="configs/det.yaml", type=str, help="Training configuration file (yaml).")
@@ -151,8 +167,11 @@ def main():
     if cfg['data']['dataset_name'] == '2014T':
         path = osp.join('../../data/sign_lang_datasets/PHOENIX-2014-T-release-v3', 'garbage', args.split)
         h, w = 260, 210
-    elif cfg['data']['dataset_name'] == 'csl-daily':
-        path = osp.join('../../data/sign_lang_datasets/csl-daily', 'keypoints_hrnet_dark_coco_wholebody')
+    elif cfg['data']['dataset_name'] == 'csl_kp':
+        path = osp.join('../../data/csl-daily', 'keypoints_hrnet_dark_coco_wholebody')
+        h, w = 512, 512
+    elif cfg['data']['dataset_name'] == 'ce_csl_kp':
+        path = osp.join('../../data/ce_csl', 'keypoints_hrnet_dark_coco_wholebody')
         h, w = 512, 512
     elif cfg['data']['dataset_name'] == 'csl-sen':
         path = osp.join('../../data/color-sentence_512x512_2', 'keypoints_hrnet_dark_coco_wholebody')
@@ -193,24 +212,33 @@ def main():
     det_model = init_detector(args.det_config, args.det_ckpt, 'cuda')
     assert det_model.CLASSES[0] == 'person', 'A detector trained on COCO is required'
     pose_model = init_pose_model(args.pose_config, args.pose_ckpt, 'cuda')
-    
+
     outputs = {}
     save_inte = 500
-    for k, batch_data in tqdm(enumerate(dataloader), desc='[Generating keypoints of {:s} of {:s}, {:d} per gpu]'.format(args.split, cfg['data']['dataset_name'], len(dataloader))):
-        frames = batch_data['sgn_videos'][0][0].numpy().transpose(0,2,3,1)*255  #[T,H,W,3]
+    for k, batch_data in tqdm(enumerate(dataloader),
+                              desc='[Generating keypoints of {:s} of {:s}, {:d} per gpu]'.format(args.split,
+                                                                                                 cfg['data'][
+                                                                                                     'dataset_name'],
+                                                                                                 len(dataloader))):
+
+        if not batch_data['sgn_videos']:
+            logger.info(f'data error, skip')
+            continue
+
+        frames = batch_data['sgn_videos'][0][0].numpy().transpose(0, 2, 3, 1) * 255  # [T,H,W,3]
         frames = np.uint8(frames)
         frames = np.split(frames, frames.shape[0], axis=0)
         video_id = batch_data['names'][0]
 
         if args.from_ckpt and video_id in ckpt_ids:
-            if (k+1)%save_inte == 0:
+            if (k + 1) % save_inte == 0:
                 fname = '{:s}_{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'], k)
-                print('save to '+fname)
+                print('save to ' + fname)
                 with open(os.path.join(path, fname), 'wb') as f:
                     pickle.dump(outputs, f)
                 outputs = {}
             continue
-        
+
         det_results = detection_inference(det_model, frames)
         # * Get detection results for human
         det_results = [x[0] for x in det_results]
@@ -262,26 +290,28 @@ def main():
         #         # f = cv2.imread('temp.png')
         #         # video_writer.write(f)
         #     video_writer.release()
-        
-        assert pose_results.shape == (batch_data['vlens'][0], 133, 3)
+
+        # assert pose_results.shape == (batch_data['vlens'][0], 133, 3)
         # np.savez_compressed(fname+'.npz', keypoints=pose_results.astype(np.float16))
         outputs[video_id] = pose_results.astype(np.float32)
-        if (k+1)%save_inte == 0:
+        if (k + 1) % save_inte == 0:
             if args.start_end is None:
                 fname = '{:s}_rank{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'], k)
             else:
-                fname = '{:s}_rank{:d}_start{:d}_end{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'], args.start_end[0], args.start_end[1], k)
-            print('save to '+fname)
+                fname = '{:s}_rank{:d}_start{:d}_end{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'],
+                                                                          args.start_end[0], args.start_end[1], k)
+            print('save to ' + fname)
             with open(os.path.join(path, fname), 'wb') as f:
                 pickle.dump(outputs, f)
             outputs = {}
-    
+
     if outputs != {}:
         if args.start_end is None:
             fname = '{:s}_rank{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'], k)
         else:
-            fname = '{:s}_rank{:d}_start{:d}_end{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'], args.start_end[0], args.start_end[1], k)
-        print('save to '+fname)
+            fname = '{:s}_rank{:d}_start{:d}_end{:d}_{:d}.pkl'.format(args.split, cfg['local_rank'], args.start_end[0],
+                                                                      args.start_end[1], k)
+        print('save to ' + fname)
         with open(os.path.join(path, fname), 'wb') as f:
             pickle.dump(outputs, f)
         outputs = {}
