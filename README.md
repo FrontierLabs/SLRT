@@ -1,14 +1,14 @@
 Our Contributions:
 - **Comprehensive CSLR Workflow Implementation**
-<br>Successfully executed the complete workflow encompassing feature extraction, ISLR training, and online CSLR inference.
+<br>Successfully executed the complete workflow, including feature extraction, ISLR training, and online CSLR inference.
 - **Training Process Optimization**
-<br>Optimized the training pipeline. On 8× Nvidia A100 GPUs, training for 100 epochs on the csl-daily dataset (using the same hyperparameters as the original paper) now completes in 10.79 days.
+<br>Optimized the training pipeline. If you are experiencing long training times, you may refer to this repository for solutions. <font color="red">In our tests, we achieved approximately a 10x speedup</font>. On 8× Nvidia A100 GPUs, training for 100 epochs on the csl-daily dataset (using the same hyperparameters as the original paper) now completes in 10.79 days.
 - **Keypoint Extraction Enhancement:**
-<br>Improved the efficiency of keypoint extraction and resolved out-of-memory (OOM) issues during this stage.
+<br>Enhanced the efficiency of keypoint extraction and resolved out-of-memory (OOM) issues during this stage, <font color="red">resulting in at least a 10% increase in processing speed</font>.
 - **Extended Dataset Support**
-<br>Added training experiments on the ce_csl dataset and provided a comprehensive preprocessing pipeline for custom datasets.
+<br>Conducted training experiments on the ce_csl dataset and also provided a comprehensive preprocessing pipeline for custom datasets.
 
-For further details, please refer to the [readme](https://github.com/FrontierLabs/SLRT/blob/main/Online/CSLR/README.md)
+For further details, please refer to the [README](https://github.com/FrontierLabs/SLRT/blob/main/Online/CSLR/README.md)
 
 The original repository README is provided below.
 
