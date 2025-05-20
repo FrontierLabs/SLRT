@@ -1,3 +1,19 @@
+Our Contributions:
+- **CSLR End-to-End Pipeline Implementation**
+<br>Developed and validated the complete workflow, covering feature extraction, ISLR training, and online CSLR inference.
+- **Training Process Optimization**
+<br>Optimized the training pipeline. On 8× Nvidia A100 GPUs, training for 100 epochs on the csl-daily dataset (using the same hyperparameters as the original paper) now completes in 10.79 days.
+- **Keypoint Extraction Enhancement:**
+<br>Added training experiments on the ce_csl dataset and provided a comprehensive preprocessing pipeline for custom datasets.
+- **Extended Dataset Support**
+<br>Improved the efficiency of keypoint extraction and resolved out-of-memory (OOM) issues during this stage.
+
+For further details, please refer to the [readme](https://github.com/FrontierLabs/SLRT/blob/main/Online/CSLR/README.md)
+
+The original repository README is provided below.
+
+---
+
 # Sign Language Processing
 
 This repo contains the official implementations of the following papers on sign language processing:
