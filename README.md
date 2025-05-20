@@ -1,6 +1,6 @@
 Our Contributions:
-- **CSLR End-to-End Pipeline Implementation**
-<br>Developed and validated the complete workflow, covering feature extraction, ISLR training, and online CSLR inference.
+- **Comprehensive CSLR Workflow Implementation**
+<br>Successfully executed the complete workflow encompassing feature extraction, ISLR training, and online CSLR inference.
 - **Training Process Optimization**
 <br>Optimized the training pipeline. On 8× Nvidia A100 GPUs, training for 100 epochs on the csl-daily dataset (using the same hyperparameters as the original paper) now completes in 10.79 days.
 - **Keypoint Extraction Enhancement:**
