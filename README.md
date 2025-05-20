@@ -1,10 +1,13 @@
 Our Contributions:
 - **Comprehensive CSLR Workflow Implementation**
 <br>Successfully executed the complete workflow, including feature extraction, ISLR training, and online CSLR inference.
+
 - **Training Process Optimization**
 <br>Optimized the training pipeline. If you are experiencing long training times, you may refer to this repository for solutions. **In our tests, we achieved approximately a 10x speedup**. On 8× Nvidia A100 GPUs, training for 100 epochs on the csl-daily dataset (using the same hyperparameters as the original paper) now completes in 10.79 days.
-- **Keypoint Extraction Enhancement:**
+
+- **Keypoint Extraction Enhancement**
 <br>Enhanced the efficiency of keypoint extraction and resolved out-of-memory (OOM) issues during this stage, **resulting in at least a 10% increase in processing speed**.
+
 - **Extended Dataset Support**
 <br>Conducted training experiments on the ce_csl dataset and also provided a comprehensive preprocessing pipeline for custom datasets.
 
